@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:avito_parser/constants/constants.dart';
 import 'package:avito_parser/data/models/ad_model.dart';
 import 'package:avito_parser/data/repository/repository.dart';
@@ -13,26 +14,32 @@ class NotificationController {
   Repository _repository;
   bool isDone = false;
   String url;
+  final _random = new Random();
+
+  /// Generates a positive random integer uniformly distributed on the range
+  /// from [min], inclusive, to [max], exclusive.
+  int next(int min, int max) => min + _random.nextInt(max - min);
 
   runLongRunningEmailJob() async {
     await prepareData();
-    
+    await notificationHelper.initialize();
+
     while (!isDone) {
-      print("Parsing url: $url");
       List<Ad> adsList = await parser.getAdsListFromMainUrl(url);
-      adsList.forEach((ad) {
+      adsList.forEach((ad) async {
         if (!urlsAds.containsKey(ad.url)) {
-          onAdFound(ad);
           urlsAds.putIfAbsent(ad.url, () => ad);
-          _repository.insertAd(ad);
+          int id = await _repository.insertAd(ad);
+          ad.id = id;
+          await onAdFound(ad);
         }
       });
-      await Future.delayed(Duration(seconds: 10));
+      await Future.delayed(Duration(seconds: next(10, 20)));
     }
   }
 
   onAdFound(Ad ad) async {
-    notificationHelper.showNotification(ad.title, ad.url);
+    notificationHelper.showNotification(ad);
   }
 
   Future<void> prepareData() async {

@@ -52,7 +52,8 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     SharedPreferences.getInstance().then((value) {
       _curentStatus = value.getString(PARSER_STATUS) ?? PARSER_STATUS_STOPPED;
-      mainUrlController.text = value.getString(PARSING_URL) ?? "";
+      mainUrlController.text = value.getString(PARSING_URL) ??
+          "https://www.avito.ru/rostovskaya_oblast/noutbuki?s=101&user=1";
     });
 
     super.initState();
