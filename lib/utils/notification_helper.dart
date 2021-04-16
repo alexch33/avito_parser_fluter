@@ -12,7 +12,7 @@ class NotificationHelper {
     var iOs = new IOSInitializationSettings();
 
     var settings = new InitializationSettings(android: android, iOS: iOs);
-    _flip.initialize(settings, onSelectNotification: onNotificatioPress);
+    _flip.initialize(settings, onSelectNotification: onSelectNotification);
 
     var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
         'channel_id', 'channel_name', 'channel_description',
@@ -29,11 +29,10 @@ class NotificationHelper {
         payload: ad.url);
   }
 
-  Future onNotificatioPress(String payload) async {
+  Future onSelectNotification(String payload) async {
     print("AAAAAAAAAAAAAAAAAAAAAA   $payload");
-
-    // if (payload != null) {
-    //   if (await canLaunch(payload)) await launch(payload);
-    // }
+    if (payload != null) {
+      if (await canLaunch(payload)) await launch(payload);
+    }
   }
 }
