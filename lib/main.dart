@@ -56,7 +56,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  String _curentStatus = "Stopped";
   final mainUrlController = TextEditingController();
   String userUrl = '';
 
@@ -76,7 +76,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _runParser() {
     setState(() {
-      _counter++;
     });
   }
 
@@ -99,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     controller: mainUrlController),
               )),
-          Expanded(child: Text("")),
+          Expanded(child: Text(_curentStatus)),
           Expanded(
               child: Column(
             children: [
