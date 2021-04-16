@@ -26,24 +26,6 @@ class AdDataSource {
     return await _adsStore.count(_db);
   }
 
-  Future<List<Ad>> getAllSortedByFilter({List<Filter> filters}) async {
-    //creating finder
-    final finder = Finder(filter: Filter.and(filters));
-
-    final recordSnapshots = await _adsStore.find(
-      _db,
-      finder: finder,
-    );
-
-    // Making a List<Ad> out of List<RecordSnapshot>
-    return recordSnapshots.map((snapshot) {
-      final ad = Ad.fromMap(snapshot.value);
-      // An ID is a key of a record from the database.
-      ad.id = snapshot.key;
-      return ad;
-    }).toList();
-  }
-
   Future<List<Ad>> getAdsFromDb() async {
     // ad list
     var adsList;
@@ -61,7 +43,7 @@ class AdDataSource {
       }).toList();
     }
 
-    return adsList;
+    return adsList ?? [];
   }
 
   Future<int> update(Ad ad) async {

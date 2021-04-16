@@ -4,11 +4,14 @@ import 'package:avito_parser/data/sources/ad_source.dart';
 
 class Repository {
   AdDataSource _adDataSource;
+  bool isInited = false;
 
-  Repository() {
-    AppDatabase.getInstance().then((dataBase) {
+  Future<void> initialize() async {
+    if (!isInited) {
+      AppDatabase dataBase = await AppDatabase.getInstance();
       _adDataSource = AdDataSource(dataBase.getDb());
-    });
+      isInited = true;
+    }
   }
 
   Future<List<Ad>> getAdsList() async {

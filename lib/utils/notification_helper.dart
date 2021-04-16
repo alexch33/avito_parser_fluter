@@ -1,17 +1,18 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class NotificationHelper {
   FlutterLocalNotificationsPlugin _flip;
   NotificationDetails _platformChannelSpecifics;
 
-  NotificationHelper() {
+  Future<void> initialize() async {
     _flip = new FlutterLocalNotificationsPlugin();
 
     var android = new AndroidInitializationSettings('@mipmap/ic_launcher');
     var iOs = new IOSInitializationSettings();
 
     var settings = new InitializationSettings(android: android, iOS: iOs);
-    _flip.initialize(settings);
+    _flip.initialize(settings, onSelectNotification: onSelectNotification);
 
     var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
         'channel_id', 'channel_name', 'channel_description',
@@ -23,7 +24,15 @@ class NotificationHelper {
         iOS: iOSPlatformChannelSpecifics);
   }
 
-  showNotification(String title, String text) {
-    _flip.show(0, title, text, _platformChannelSpecifics);
+  showNotification(ad) {
+    _flip.show(ad.id, ad.title, ad.time, _platformChannelSpecifics,
+        payload: ad.url);
+  }
+
+  Future onSelectNotification(String payload) async {
+    print("AAAAAAAAAAAAAAAAAAAAAA   $payload");
+    if (payload != null) {
+      if (await canLaunch(payload)) await launch(payload);
+    }
   }
 }
