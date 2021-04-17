@@ -30,7 +30,6 @@ class NotificationHelper {
   }
 
   Future onSelectNotification(String payload) async {
-    print("AAAAAAAAAAAAAAAAAAAAAA   $payload");
     if (payload != null) {
       if (await canLaunch(payload)) await launch(payload);
     }
