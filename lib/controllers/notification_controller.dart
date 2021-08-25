@@ -35,6 +35,7 @@ class NotificationController {
           await onAdFound(ad);
         }
       });
+
       await Future.delayed(Duration(seconds: next(10, 20)));
     }
   }
