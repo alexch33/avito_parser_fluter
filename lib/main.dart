@@ -1,17 +1,127 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:rxdart/subjects.dart';
 
 import 'constants/constants.dart';
 import 'controllers/notification_controller.dart';
 
+void callBackDispatcher() async {
+  bool isRunning = false;
+
+  while (true) {
+    try {
+      if (!isRunning) {
+        isRunning = true;
+        Workmanager.executeTask((task, inputData) async {
+          if (task == BACKGROUND_TASK) {
+            try {
+              await NotificationController.getInstace()
+                  .runLongRunningEmailJob();
+              isRunning = false;
+            } catch (err) {
+              isRunning = false;
+            }
+          }
+          return Future.value(true);
+        });
+      }
+      // print(DateTime.now().toString() + " running " + isRunning.toString());
+      await Future.delayed(Duration(minutes: 1));
+    } catch (err) {
+      isRunning = false;
+    }
+  }
+}
+
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
+final BehaviorSubject<ReceivedNotification> didReceiveLocalNotificationSubject =
+    BehaviorSubject<ReceivedNotification>();
+
+final BehaviorSubject<String> selectNotificationSubject =
+    BehaviorSubject<String>();
+
+const MethodChannel platform =
+    MethodChannel('dexterx.dev/flutter_local_notifications_example');
+
+class ReceivedNotification {
+  ReceivedNotification({
+    this.id,
+    this.title,
+    this.body,
+    this.payload,
+  });
+
+  final int id;
+  final String title;
+  final String body;
+  final String payload;
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  String selectedNotificationPayload;
+  final NotificationAppLaunchDetails notificationAppLaunchDetails =
+      await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+  // String initialRoute = HomePage.routeName;
+  if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
+    selectedNotificationPayload = notificationAppLaunchDetails?.payload;
+    // initialRoute = SecondPage.routeName;
+    if (selectedNotificationPayload != null) {
+      if (await canLaunch(selectedNotificationPayload))
+        await launch(selectedNotificationPayload);
+    }
+  }
 
-  runApp(MyApp());
+  const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+  /// Note: permissions aren't requested here just to demonstrate that can be
+  /// done later
+  final IOSInitializationSettings initializationSettingsIOS =
+      IOSInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+          onDidReceiveLocalNotification:
+              (int id, String title, String body, String payload) async {
+            didReceiveLocalNotificationSubject.add(ReceivedNotification(
+                id: id, title: title, body: body, payload: payload));
+          });
+  const MacOSInitializationSettings initializationSettingsMacOS =
+      MacOSInitializationSettings(
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false);
+  final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+      macOS: initializationSettingsMacOS);
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
+      onSelectNotification: (String payload) async {
+    if (payload != null) {
+      debugPrint('notification payload: $payload');
+      if (selectedNotificationPayload != null) {
+        if (await canLaunch(selectedNotificationPayload))
+          await launch(selectedNotificationPayload);
+      }
+    }
+    selectedNotificationPayload = payload;
+    selectNotificationSubject.add(payload);
+  });
+
+  runApp(MyApp(selectedNotificationPayload));
 }
 
 class MyApp extends StatelessWidget {
-  MyApp();
+  final String selectedNotificationPayload;
+
+  MyApp(this.selectedNotificationPayload);
 
   // This widget is the root of your application.
   @override
@@ -39,7 +149,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String _curentStatus = PARSER_STATUS_WAITING_INFO;
   final mainUrlController = TextEditingController();
-  NotificationController controller = NotificationController();
 
   @override
   void initState() {
@@ -52,17 +161,20 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  run() {
-    controller.runLongRunningEmailJob();
+  void _runParserInBackground(String url) async {
+    await Workmanager.initialize(callBackDispatcher, isInDebugMode: false);
+
+    Workmanager.registerOneOffTask("1", BACKGROUND_TASK);
   }
 
   void _runParser() {
+    if (mainUrlController.text.isEmpty) return;
+
     SharedPreferences.getInstance().then((value) async {
       await value.reload();
       value.setString(PARSING_URL, mainUrlController.text.trim());
       value.setString(PARSER_STATUS, PARSER_STATUS_RUNNING);
-      run();
-
+      _runParserInBackground(mainUrlController.text);
       setState(() {
         _curentStatus = PARSER_STATUS_RUNNING;
       });
@@ -70,13 +182,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _stopParser() {
-    SharedPreferences.getInstance().then((value) async {
-      controller.isDone = true;
-      value.reload();
-      value.setString(PARSER_STATUS, PARSER_STATUS_STOPPED);
-    });
-    setState(() {
-      _curentStatus = PARSER_STATUS_STOPPED;
+    Workmanager.cancelAll().then((value) {
+      SharedPreferences.getInstance().then((value) async {
+        value.reload();
+        value.setString(PARSER_STATUS, PARSER_STATUS_STOPPED);
+      });
+      setState(() {
+        _curentStatus = PARSER_STATUS_STOPPED;
+      });
     });
   }
 

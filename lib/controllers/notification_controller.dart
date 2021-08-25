@@ -7,6 +7,7 @@ import 'package:avito_parser/utils/parser/avito_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationController {
+  static NotificationController _instance;
   final NotificationHelper notificationHelper = NotificationHelper();
   final AvitoParser parser = new AvitoParser();
   final Map<String, Ad> urlsAds = {};
@@ -55,5 +56,10 @@ class NotificationController {
     await sharedPreferences.reload();
 
     url = sharedPreferences.getString(PARSING_URL);
+  }
+
+  static NotificationController getInstace() {
+    if (_instance == null) _instance = new NotificationController();
+    return _instance;
   }
 }
