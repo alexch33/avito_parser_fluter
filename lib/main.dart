@@ -9,13 +9,32 @@ import 'package:rxdart/subjects.dart';
 import 'constants/constants.dart';
 import 'controllers/notification_controller.dart';
 
-void callBackDispatcher() {
-  Workmanager.executeTask((task, inputData) async {
-    if (task == BACKGROUND_TASK) {
-      await NotificationController().runLongRunningEmailJob();
+void callBackDispatcher() async {
+  bool isRunning = false;
+
+  while (true) {
+    try {
+      if (!isRunning) {
+        isRunning = true;
+        Workmanager.executeTask((task, inputData) async {
+          if (task == BACKGROUND_TASK) {
+            try {
+              await NotificationController.getInstace()
+                  .runLongRunningEmailJob();
+              isRunning = false;
+            } catch (err) {
+              isRunning = false;
+            }
+          }
+          return Future.value(true);
+        });
+      }
+      // print(DateTime.now().toString() + " running " + isRunning.toString());
+      await Future.delayed(Duration(minutes: 1));
+    } catch (err) {
+      isRunning = false;
     }
-    return true;
-  });
+  }
 }
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -54,9 +73,9 @@ void main() async {
     selectedNotificationPayload = notificationAppLaunchDetails?.payload;
     // initialRoute = SecondPage.routeName;
     if (selectedNotificationPayload != null) {
-        if (await canLaunch(selectedNotificationPayload))
-          await launch(selectedNotificationPayload);
-      }
+      if (await canLaunch(selectedNotificationPayload))
+        await launch(selectedNotificationPayload);
+    }
   }
 
   const AndroidInitializationSettings initializationSettingsAndroid =
@@ -143,7 +162,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _runParserInBackground(String url) async {
-    await Workmanager.initialize(callBackDispatcher, isInDebugMode: true);
+    await Workmanager.initialize(callBackDispatcher, isInDebugMode: false);
 
     Workmanager.registerOneOffTask("1", BACKGROUND_TASK);
   }
