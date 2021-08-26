@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,11 +28,11 @@ void callBackDispatcher() async {
           return Future.value(true);
         });
       }
-      // print(DateTime.now().toString() + " running " + isRunning.toString());
-      await Future.delayed(Duration(minutes: 1));
     } catch (err) {
       isRunning = false;
     }
+    // print(DateTime.now().toString() + " running " + isRunning.toString());
+    await Future.delayed(Duration(seconds: 3));
   }
 }
 
@@ -45,9 +44,6 @@ final BehaviorSubject<ReceivedNotification> didReceiveLocalNotificationSubject =
 
 final BehaviorSubject<String> selectNotificationSubject =
     BehaviorSubject<String>();
-
-const MethodChannel platform =
-    MethodChannel('dexterx.dev/flutter_local_notifications_example');
 
 class ReceivedNotification {
   ReceivedNotification({
