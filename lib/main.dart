@@ -15,7 +15,7 @@ void callBackDispatcher() async {
     try {
       if (!isRunning) {
         isRunning = true;
-        Workmanager.executeTask((task, inputData) async {
+        Workmanager().executeTask((task, inputData) async {
           if (task == BACKGROUND_TASK) {
             try {
               await NotificationController.getInstace()
@@ -158,9 +158,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _runParserInBackground(String url) async {
-    await Workmanager.initialize(callBackDispatcher, isInDebugMode: false);
+    await Workmanager().initialize(callBackDispatcher, isInDebugMode: false);
 
-    Workmanager.registerOneOffTask("1", BACKGROUND_TASK);
+    Workmanager().registerOneOffTask("1", BACKGROUND_TASK);
   }
 
   void _runParser() {
@@ -178,7 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _stopParser() {
-    Workmanager.cancelAll().then((value) {
+    Workmanager().cancelAll().then((value) {
       SharedPreferences.getInstance().then((value) async {
         value.reload();
         value.setString(PARSER_STATUS, PARSER_STATUS_STOPPED);

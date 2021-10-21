@@ -15,7 +15,7 @@ class NotificationHelper {
     _flip.initialize(settings, onSelectNotification: onSelectNotification);
 
     var androidPlatformChannelSpecifics = new AndroidNotificationDetails(
-        'channel_id', 'channel_name', 'channel_description',
+        'channel_id', 'channel_name',
         importance: Importance.max, priority: Priority.high);
     var iOSPlatformChannelSpecifics = new IOSNotificationDetails();
 
