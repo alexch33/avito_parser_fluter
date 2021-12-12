@@ -9,28 +9,17 @@ import 'constants/constants.dart';
 import 'controllers/notification_controller.dart';
 
 void callBackDispatcher() async {
-  bool isRunning = false;
-
   while (true) {
     try {
-      if (!isRunning) {
-        isRunning = true;
-        Workmanager().executeTask((task, inputData) async {
-          if (task == BACKGROUND_TASK) {
-            try {
-              await NotificationController.getInstace()
-                  .runLongRunningEmailJob();
-              isRunning = false;
-            } catch (err) {
-              isRunning = false;
-            }
-          }
-          return Future.value(true);
-        });
-      }
-    } catch (err) {
-      isRunning = false;
-    }
+      Workmanager().executeTask((task, inputData) async {
+        if (task == BACKGROUND_TASK) {
+          try {
+            await NotificationController.getInstace().runLongRunningEmailJob();
+          } catch (err) {}
+        }
+        return Future.value(true);
+      });
+    } catch (err) {}
     // print(DateTime.now().toString() + " running " + isRunning.toString());
     await Future.delayed(Duration(seconds: 3));
   }
