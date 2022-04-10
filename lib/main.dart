@@ -9,19 +9,24 @@ import 'constants/constants.dart';
 import 'controllers/notification_controller.dart';
 
 void callBackDispatcher() async {
-  while (true) {
-    try {
-      Workmanager().executeTask((task, inputData) async {
-        if (task == BACKGROUND_TASK) {
+  try {
+    Workmanager().executeTask((task, inputData) async {
+      WidgetsFlutterBinding.ensureInitialized();
+
+      if (task == BACKGROUND_TASK) {
+        while (true) {
           try {
             await NotificationController.getInstace().runLongRunningEmailJob();
-          } catch (err) {}
+          } catch (err) {
+            print(err);
+          }
+          await Future.delayed(Duration(seconds: 3));
         }
-        return Future.value(true);
-      });
-    } catch (err) {}
-    // print(DateTime.now().toString() + " running " + isRunning.toString());
-    await Future.delayed(Duration(seconds: 3));
+      }
+      return Future.value(true);
+    });
+  } catch (err) {
+    print(err);
   }
 }
 
@@ -36,10 +41,10 @@ final BehaviorSubject<String> selectNotificationSubject =
 
 class ReceivedNotification {
   ReceivedNotification({
-    this.id,
-    this.title,
-    this.body,
-    this.payload,
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.payload,
   });
 
   final int id;
@@ -50,8 +55,8 @@ class ReceivedNotification {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  String selectedNotificationPayload;
-  final NotificationAppLaunchDetails notificationAppLaunchDetails =
+  String? selectedNotificationPayload;
+  final NotificationAppLaunchDetails? notificationAppLaunchDetails =
       await flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
   // String initialRoute = HomePage.routeName;
   if (notificationAppLaunchDetails?.didNotificationLaunchApp ?? false) {
@@ -74,9 +79,12 @@ void main() async {
           requestBadgePermission: false,
           requestSoundPermission: false,
           onDidReceiveLocalNotification:
-              (int id, String title, String body, String payload) async {
+              (int id, String? title, String? body, String? payload) async {
             didReceiveLocalNotificationSubject.add(ReceivedNotification(
-                id: id, title: title, body: body, payload: payload));
+                id: id,
+                title: title ?? '',
+                body: body ?? '',
+                payload: payload ?? ''));
           });
   const MacOSInitializationSettings initializationSettingsMacOS =
       MacOSInitializationSettings(
@@ -88,19 +96,19 @@ void main() async {
       iOS: initializationSettingsIOS,
       macOS: initializationSettingsMacOS);
   await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-      onSelectNotification: (String payload) async {
+      onSelectNotification: (String? payload) async {
     if (payload != null) {
       debugPrint('notification payload: $payload');
       if (selectedNotificationPayload != null) {
-        if (await canLaunch(selectedNotificationPayload))
-          await launch(selectedNotificationPayload);
+        if (await canLaunch(selectedNotificationPayload ?? ''))
+          await launch(selectedNotificationPayload ?? '');
       }
     }
     selectedNotificationPayload = payload;
-    selectNotificationSubject.add(payload);
+    selectNotificationSubject.add(payload ?? '');
   });
 
-  runApp(MyApp(selectedNotificationPayload));
+  runApp(MyApp(selectedNotificationPayload ?? ''));
 }
 
 class MyApp extends StatelessWidget {
@@ -123,9 +131,9 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  MyHomePage({Key? key, this.title}) : super(key: key);
 
-  final String title;
+  final String? title;
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -182,7 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title ?? ''),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -7,14 +7,14 @@ import 'package:avito_parser/utils/parser/avito_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationController {
-  static NotificationController _instance;
+  static NotificationController _instance = new NotificationController();
   final NotificationHelper notificationHelper = NotificationHelper();
   final AvitoParser parser = new AvitoParser();
   final Map<String, Ad> urlsAds = {};
-  SharedPreferences sharedPreferences;
-  Repository _repository;
+  late SharedPreferences sharedPreferences;
+  late Repository _repository;
   bool isDone = false;
-  String url;
+  String? url;
   final _random = new Random();
 
   /// Generates a positive random integer uniformly distributed on the range
@@ -24,9 +24,8 @@ class NotificationController {
   runLongRunningEmailJob() async {
     await prepareData();
     await notificationHelper.initialize();
-
     while (!isDone) {
-      List<Ad> adsList = await parser.getAdsListFromMainUrl(url);
+      List<Ad> adsList = await parser.getAdsListFromMainUrl(url!);
       adsList.forEach((ad) async {
         if (!urlsAds.containsKey(ad.url)) {
           urlsAds.putIfAbsent(ad.url, () => ad);
@@ -59,7 +58,6 @@ class NotificationController {
   }
 
   static NotificationController getInstace() {
-    if (_instance == null) _instance = new NotificationController();
     return _instance;
   }
 }

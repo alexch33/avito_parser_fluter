@@ -2,8 +2,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class NotificationHelper {
-  FlutterLocalNotificationsPlugin _flip;
-  NotificationDetails _platformChannelSpecifics;
+  late FlutterLocalNotificationsPlugin _flip;
+  late NotificationDetails _platformChannelSpecifics;
 
   Future<void> initialize() async {
     _flip = new FlutterLocalNotificationsPlugin();
@@ -29,7 +29,7 @@ class NotificationHelper {
         payload: ad.url);
   }
 
-  Future onSelectNotification(String payload) async {
+  Future onSelectNotification(String? payload) async {
     if (payload != null) {
       if (await canLaunch(payload)) await launch(payload);
     }

@@ -6,7 +6,13 @@ class Ad {
   String time;
   String price;
 
-  Ad({this.id, this.url, this.title, this.description, this.time, this.price});
+  Ad(
+      {required this.id,
+      required this.url,
+      required this.title,
+      required this.description,
+      required this.time,
+      required this.price});
 
   factory Ad.fromMap(Map<String, dynamic> json) => Ad(
       id: json["id"],

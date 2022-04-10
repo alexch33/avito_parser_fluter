@@ -3,13 +3,13 @@ import 'package:avito_parser/data/models/ad_model.dart';
 import 'package:avito_parser/data/sources/ad_source.dart';
 
 class Repository {
-  AdDataSource _adDataSource;
+  late AdDataSource _adDataSource;
   bool isInited = false;
 
   Future<void> initialize() async {
     if (!isInited) {
       AppDatabase dataBase = await AppDatabase.getInstance();
-      _adDataSource = AdDataSource(dataBase.getDb());
+      _adDataSource = AdDataSource(dataBase.getDb()!);
       isInited = true;
     }
   }
